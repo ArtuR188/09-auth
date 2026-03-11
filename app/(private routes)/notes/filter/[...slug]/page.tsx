@@ -13,6 +13,7 @@ function toNoteTag(value: string | undefined): NoteTag | undefined {
   if (!value) return undefined;
   return (TAGS as readonly string[]).includes(value) ? (value as NoteTag) : undefined;
 }
+
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const selected = slug?.[0] ?? 'all';
@@ -42,7 +43,6 @@ export default async function FilterNotesPage({ params }: PageProps) {
     queryFn: () =>
       fetchNotes({
         page: 1,
-        perPage: 12,
         search: "",
         tag,
       }),
