@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkSession } from './lib/api/serverApi';
 
 const privateRoutes = ['/profile', '/notes'];
 const publicRoutes = ['/sign-in', '/sign-up'];
@@ -11,14 +12,33 @@ export async function proxy(request: NextRequest) {
   const isPrivate = privateRoutes.some((route) => pathname.startsWith(route));
   const isPublic = publicRoutes.some((route) => pathname.startsWith(route));
 
-  const hasSession = accessToken || refreshToken;
+  if (isPrivate) {
+    if (accessToken) {
+      return NextResponse.next();
+    }
 
-  if (isPrivate && !hasSession) {
+    if (refreshToken) {
+      try {
+        const response = await checkSession();
+        const setCookie = response.headers['set-cookie'];
+        const nextResponse = NextResponse.next();
+        if (setCookie) {
+          const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
+          cookies.forEach((cookie) => {
+            nextResponse.headers.append('Set-Cookie', cookie);
+          });
+        }
+        return nextResponse;
+      } catch {
+        return NextResponse.redirect(new URL('/sign-in', request.url));
+      }
+    }
+
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  if (isPublic && hasSession) {
-    return NextResponse.redirect(new URL('/profile', request.url));
+  if (isPublic && accessToken) {
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   return NextResponse.next();
