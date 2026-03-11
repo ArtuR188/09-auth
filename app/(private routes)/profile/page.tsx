@@ -5,7 +5,7 @@ import useAuthStore from '@/lib/store/authStore';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import css from './EditProfilePage.module.css';
+import css from './ProfilePage.module.css';
 
 export default function EditProfilePage() {
   const router = useRouter();
