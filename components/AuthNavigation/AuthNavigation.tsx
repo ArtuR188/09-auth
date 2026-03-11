@@ -1,64 +1,61 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { useDebouncedCallback } from 'use-debounce';
+import { logout } from '@/lib/api/clientApi';
+import useAuthStore from '@/lib/store/authStore';
 import Link from 'next/link';
-import { fetchNotes } from '@/lib/api/clientApi';
-import NoteList from '@/components/NoteList/NoteList';
-import Pagination from '@/components/Pagination/Pagination';
-import SearchBox from '@/components/SearchBox/SearchBox';
-import type { NoteTag } from '@/types/note';
-import css from '@/components/NotesClient/NotesClient.module.css';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import css from './AuthNavigation.module.css';
 
-interface NotesClientProps {
-  initialTag?: NoteTag;
-}
+export default function AuthNavigation() {
+  const [mounted, setMounted] = useState(false);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((state) => state.user);
+  const clearIsAuthenticated = useAuthStore((state) => state.clearIsAuthenticated);
+  const router = useRouter();
 
-export default function NotesClient({ initialTag }: NotesClientProps) {
-  const [page, setPage] = useState<number>(1);
-  const [search, setSearch] = useState<string>('');
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  const handleSearch = useDebouncedCallback((value: string): void => {
-    setSearch(value);
-    setPage(1);
-  }, 400);
-
-  const handlePageChange = (newPage: number): void => {
-    setPage(newPage);
+  const handleLogout = async () => {
+    await logout();
+    clearIsAuthenticated();
+    router.push('/sign-in');
   };
 
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['notes', page, search, initialTag],
-    queryFn: () =>
-      fetchNotes({
-        tag: initialTag,
-        page,
-        search: search || undefined,
-      }),
-  });
+  if (!mounted) return null;
+
+  if (isAuthenticated) {
+    return (
+      <>
+        <li className={css.navigationItem}>
+          <Link href="/profile" prefetch={false} className={css.navigationLink}>
+            Profile
+          </Link>
+        </li>
+        <li className={css.navigationItem}>
+          <p className={css.userEmail}>{user?.email}</p>
+          <button className={css.logoutButton} onClick={handleLogout}>
+            Logout
+          </button>
+        </li>
+      </>
+    );
+  }
 
   return (
-    <div className={css.app}>
-      <div className={css.toolbar}>
-        <SearchBox onSearch={handleSearch} />
-        <Link href="/notes/action/create" className={css.button}>
-          Create note +
+    <>
+      <li className={css.navigationItem}>
+        <Link href="/sign-in" prefetch={false} className={css.navigationLink}>
+          Login
         </Link>
-      </div>
-
-      {isLoading && <p>Loading...</p>}
-      {isError && <p>Something went wrong.</p>}
-      {data && (
-        <>
-          <NoteList notes={data.notes} />
-          <Pagination
-            pageCount={data.totalPages}
-            currentPage={page}
-            onPageChange={handlePageChange}
-          />
-        </>
-      )}
-    </div>
+      </li>
+      <li className={css.navigationItem}>
+        <Link href="/sign-up" prefetch={false} className={css.navigationLink}>
+          Sign up
+        </Link>
+      </li>
+    </>
   );
 }
