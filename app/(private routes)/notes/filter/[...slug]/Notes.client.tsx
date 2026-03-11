@@ -35,7 +35,7 @@ export default function NotesClient({ initialTag }: NotesClientProps) {
         tag: initialTag,
         page,
         search: search || undefined,
-        perPage: 12,
+        
       }),
   });
 
