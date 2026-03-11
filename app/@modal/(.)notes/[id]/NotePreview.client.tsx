@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import Modal from '@/components/Modal/Modal';
 import type { Note } from '@/types/note';
-import NoteDetailsClient from '../../../notes/[id]/NoteDetails.client';
+import NoteDetailsClient from '../../../(private routes)/notes/[id]/NoteDetails.client';
 
 interface Props {
   note: Note;
