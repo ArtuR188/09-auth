@@ -21,14 +21,24 @@ export async function proxy(request: NextRequest) {
       try {
         const response = await checkSession();
         const setCookie = response.headers['set-cookie'];
-        const nextResponse = NextResponse.next();
+
         if (setCookie) {
           const cookies = Array.isArray(setCookie) ? setCookie : [setCookie];
-          cookies.forEach((cookie) => {
-            nextResponse.headers.append('Set-Cookie', cookie);
-          });
+          const hasNewTokens = cookies.some(
+            (cookie) =>
+              cookie.includes('accessToken=') || cookie.includes('refreshToken=')
+          );
+
+          if (hasNewTokens) {
+            const nextResponse = NextResponse.next();
+            cookies.forEach((cookie) => {
+              nextResponse.headers.append('Set-Cookie', cookie);
+            });
+            return nextResponse;
+          }
         }
-        return nextResponse;
+
+        return NextResponse.redirect(new URL('/sign-in', request.url));
       } catch {
         return NextResponse.redirect(new URL('/sign-in', request.url));
       }
