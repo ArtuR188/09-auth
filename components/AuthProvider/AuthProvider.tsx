@@ -1,6 +1,6 @@
 'use client';
 
-import { checkSession } from '@/lib/api/clientApi';
+import { checkSession, getMe } from '@/lib/api/clientApi';
 import useAuthStore from '@/lib/store/authStore';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -32,7 +32,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
       try {
         const result = await checkSession();
         if (result && (result as { success?: boolean }).success) {
-          setLoading(false);
+          const user = await getMe();
+          setUser(user);
         } else {
           clearIsAuthenticated();
           router.push('/sign-in');

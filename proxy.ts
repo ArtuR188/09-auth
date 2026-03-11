@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const privateRoutes = ['/notes', '/profile'];
+const privateRoutes = ['/profile', '/notes'];
 const publicRoutes = ['/sign-in', '/sign-up'];
 
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get('accessToken')?.value;
+  const accessToken = request.cookies.get('accessToken')?.value;
+  const refreshToken = request.cookies.get('refreshToken')?.value;
 
   const isPrivate = privateRoutes.some((route) => pathname.startsWith(route));
   const isPublic = publicRoutes.some((route) => pathname.startsWith(route));
 
-  if (isPrivate && !token) {
+  const hasSession = accessToken || refreshToken;
+
+  if (isPrivate && !hasSession) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  if (isPublic && token) {
+  if (isPublic && hasSession) {
     return NextResponse.redirect(new URL('/profile', request.url));
   }
 
@@ -22,5 +25,10 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/profile/:path*',
+    '/notes/:path*',
+    '/sign-in',
+    '/sign-up',
+  ],
 };
